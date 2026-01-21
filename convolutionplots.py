@@ -8,21 +8,21 @@ A = 1.0
 lambda_nm = 800.0      # nm
 
 num_to_avg = 10
-dA_noise = 0.01
-dphi_noise = 0.01
+dA_noise = 0.1
+dphi_noise = 0.1
 
 dx_beam = 100.0  # nm
 N_beam = 1000.0
 
 # coordinate
-x = np.linspace(-5000, 5000, 20001)
+x = np.linspace(-lambda_nm, lambda_nm, 2000)
 dx = x[1] - x[0]
 
 # ----------------------------
 # Laser fringe
 # ----------------------------
 def laser_fringe(x, A, lambd, phi):
-    return A**2 * np.sin(x / lambd / 2 + phi)**2
+    return A**2 * np.sin(x / lambd / (2*np.pi) + phi)**2
 
 # ----------------------------
 # Gaussian beam
@@ -89,11 +89,10 @@ plt.tight_layout()
 # Phase scan with averaging
 # ============================================================
 
-num_phase = 1000
-num_avg   = 500
-squeezing_parameter=0.3
-#phi_scan = np.linspace(0, 2*np.pi, num_phase)
-phi_scan = np.linspace(3, 3.3, num_phase)
+num_phase = 100
+num_avg   = 50
+squeezing_parameter=np.exp(-1)
+phi_scan = np.linspace(0, 6.28, num_phase)
 
 mean_both = np.zeros_like(phi_scan)
 std_both  = np.zeros_like(phi_scan)
@@ -104,7 +103,6 @@ std_A  = np.zeros_like(phi_scan)
 def phiscan(beamsize):
 
     beam = gaussian_beam(x, N_beam, beamsize)
-
     mean_both = np.zeros_like(phi_scan)
     std_both  = np.zeros_like(phi_scan)
     mean_A    = np.zeros_like(phi_scan)
@@ -122,20 +120,24 @@ def phiscan(beamsize):
             dA   = np.random.normal(0, dA_noise)
             dphi = np.random.normal(0, dphi_noise)
             #print(dA,dphi)
+            #print(dA,dphi)
             
-            fringe = laser_fringe(x, A + dA, lambda_nm, phi + dphi)
+            fringe = laser_fringe(x, A + dA, lambda_nm, phi+dphi)
             signal_x = fringe*beam #np.convolve(fringe, beam, mode="same") * dx
             signals_both.append(np.trapezoid(signal_x, x))
             #signals_both.append(fringe)
+            #print((A+dA)*(phi+dphi))
 
             fringe = laser_fringe(x, A + dA/squeezing_parameter, lambda_nm, phi+dphi*squeezing_parameter)
             signal_x = fringe*beam #np.convolve(fringe, beam, mode="same") * dx
             signals_A.append(np.trapezoid(signal_x, x))
             #signals_A.append(fringe)
+            #print((A+dA/squeezing_parameter)*(phi+dphi*squeezing_parameter))
 
             fringe = laser_fringe(x, A + dA*squeezing_parameter, lambda_nm, phi+ dphi/squeezing_parameter)
             signal_x = fringe*beam #np.convolve(fringe, beam, mode="same") * dx
             signals_p.append(np.trapezoid(signal_x, x))
+            #print((A+dA*squeezing_parameter)*(phi+dphi/squeezing_parameter))
             #signals_p.append(fringe)
             
 
@@ -146,14 +148,14 @@ def phiscan(beamsize):
         mean_p[i]    = np.mean(signals_p)
         std_p[i]     = np.std(signals_p)
 
-    total_variance = np.trapezoid(std_both**2, phi_scan)
-    total_variance_A = np.trapezoid(std_A**2, phi_scan)
-    total_variance_p = np.trapezoid(std_p**2, phi_scan)
+    total_variance = np.trapezoid(std_both, phi_scan)
+    total_variance_A = np.trapezoid(std_A, phi_scan)
+    total_variance_p = np.trapezoid(std_p, phi_scan)
     print(total_variance, total_variance_A, total_variance_p)
 
     return mean_both, std_both, mean_A, std_A, mean_p, std_p
 
-def plotphiscan(beamsize):
+def plotphiscan(beamsize): 
     mean_both1, std_both1, mean_A1, std_A1, mean_p, std_p=phiscan(beamsize)
     
     plt.plot(phi_scan, mean_A1, lw=2, label=f"with phase squeezing, {beamsize} nm beam")
@@ -173,10 +175,10 @@ def plotphiscan(beamsize):
     )
 
 plt.figure(figsize=(7,4))
-beamsize1=100
+beamsize1=10
 plotphiscan(beamsize1)
 #plotphiscan(50)
-beamsize2=10
+beamsize2=1
 #plotphiscan(beamsize2)
 plt.xlabel("Relative phase between beam and fringe $\\phi$")
 plt.ylabel("Detected signal (a.u.)")
