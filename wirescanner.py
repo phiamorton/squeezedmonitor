@@ -32,8 +32,8 @@ for beamsize in beams:
     # ----------------------------
     # Scan & sampling
     # ----------------------------
-    y_scan = np.linspace(-grid_width, grid_width, 150)
-    N_samples = 50
+    y_scan = np.linspace(-grid_width, grid_width, 100)
+    N_samples = 10
 
     # ----------------------------
     # Electron beam
@@ -115,3 +115,47 @@ plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.show()
+
+
+def gauss(y, A, sigma):
+    return A * np.exp(-y**2 / (2 * sigma**2))
+
+from scipy.optimize import curve_fit
+
+print("\nReconstructed beam sizes:\n")
+
+for label, (mean_vals, std_vals) in results.items():
+
+    if label == "Simulated beam":
+        continue
+
+    # Initial guesses
+    A0_guess = mean_vals.max()
+    sigma_guess = np.sqrt(sigma_e**2 + sigma_L**2)
+
+    popt, pcov = curve_fit(
+        gauss,
+        y_scan,
+        mean_vals,
+        p0=[A0_guess, sigma_guess],
+        sigma=std_vals,
+        absolute_sigma=True
+    )
+
+    A_fit, sigma_meas = popt
+    dA_fit, dsigma_meas = np.sqrt(np.diag(pcov))
+
+    # Deconvolve laser size
+    sigma_e_rec = np.sqrt(sigma_meas**2 - sigma_L**2)
+
+    # Error propagation
+    dsigma_e = (sigma_meas / sigma_e_rec) * dsigma_meas
+
+    print(f"{label}:")
+    print(f"  σ_meas = {sigma_meas:.2f} ± {dsigma_meas:.2f} nm")
+    print(f"  σ_e    = {sigma_e_rec:.2f} ± {dsigma_e:.2f} nm\n")
+
+y_fine = np.linspace(y_scan.min(), y_scan.max(), 1000)
+plt.plot(y_fine, gauss(y_fine, A_fit, sigma_meas), '--k')
+
+
