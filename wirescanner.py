@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 plt.figure(figsize=(8,5))
-beams=[10,20]
+beams=[10]
 grid_width=np.max(beams)*3
 for beamsize in beams:
     # ----------------------------
@@ -17,7 +17,9 @@ for beamsize in beams:
     A0 = 1.0
     sigma_A0 = 0.05
     sigma_phi0 = 0.05
-    r = 1.0              # squeezing factor
+    dB_squeezing=10
+    r = 1.15/2 # squeezing factor
+
 
     # ----------------------------
     # Coordinate grid (nm)
@@ -51,7 +53,7 @@ for beamsize in beams:
     # ----------------------------
     cases = {
         "Unsqueezed": (sigma_A0, sigma_phi0),
-        "Amplitude-squeezed": (sigma_A0*np.exp(-r), sigma_phi0*np.exp(+r)),
+        "Amplitude-squeezed": (sigma_A0*np.exp(-2*r), sigma_phi0*np.exp(+2*r)),
         "Simulated beam": (0,0)
     }
 

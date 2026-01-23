@@ -6,7 +6,9 @@ import cmath
 # Parameters
 # ----------------------------
 phase_dep=True
-dB_squeezing=10
+dB_squeezing=5
+r= -1/2*np.log(10**(-dB_squeezing/10))
+print(r)
 A = 1.0
 lambda_nm = 800.0      # nm
 
@@ -67,13 +69,11 @@ def phiscan(beamsize):
         signals_p    = []
         ###HERE NEED TO FIGURE OUT SQUEEZING ANGLE
         if phase_dep==True:
-            squeezing_parameter= 10**(-dB_squeezing*(2*np.sin(2*np.pi*(phi)/lambda_nm+phi)**2-1)/20)+0.00001
+            squeezing_parameter= np.exp(-2*r*(2*np.sin(2*np.pi*(phi)/lambda_nm+phi)**2-1))
+            #print(squeezing_parameter)
             # here is the amount of squeezing and phase for squeezing quadrature 
         else:
-            squeezing_parameter= 1/2*np.log(10**(-dB_squeezing/10))
-            r=np.log(dB_squeezing)/2
-            #print(squeezing_parameter)
-            squeezing_parameter=10**(-dB_squeezing/20)
+            squeezing_parameter=np.exp(-2*r)
         for _ in range(num_avg):
             laser_fringe_weight=laser_fringe(x,A,lambda_nm, phi)
             dA   = np.random.normal(0, dA_noise)
@@ -133,7 +133,7 @@ def plotphiscan(beamsize):
             phi_scan, mean_p - std_p, mean_p + std_p, alpha=0.3
         )
         #print(std_both1[500], std_A1[500])
-    
+        
     plt.plot(phi_scan, mean_both1, lw=2, label=f"without squeezing, {beamsize} nm e beam")
     plt.fill_between(
         phi_scan, mean_both1 - std_both1, mean_both1 + std_both1, alpha=0.3
@@ -158,7 +158,7 @@ plotphiscan(beamsize1)
 signal1=ideal_fringe(beamsize1)
 beamsize2=50
 plotphiscan(beamsize2)
-signal2=ideal_fringe(beamsize2)
+#signal2=ideal_fringe(beamsize2)
 #plt.plot(phi_scan,signal1, label=f'fringe pattern with 0 error, {beamsize1} nm beam', color='brown')
 #plt.plot(phi_scan,signal2, label=f'fringe pattern with 0 error, {beamsize2} nm beam', color='black')
 plt.xlabel("Relative phase between beam and fringe $\\phi$")
