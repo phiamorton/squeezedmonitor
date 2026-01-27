@@ -1,6 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+import matplotlib as mpl
+
+mpl.rcParams.update({
+    "font.size": 14,
+    "axes.titlesize": 16,
+    "axes.labelsize": 14,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+    "legend.fontsize": 12,
+})
+
 plt.figure(figsize=(8,5))
 beams=[10]
 grid_width=np.max(beams)*3
@@ -18,7 +29,7 @@ for beamsize in beams:
     sigma_A0 = 0.05
     sigma_phi0 = 0.05
     dB_squeezing=10
-    r = 1.15/2 # squeezing factor
+    r = 1.15/2 #10dB # squeezing factor
 
 
     # ----------------------------

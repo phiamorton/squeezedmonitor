@@ -2,6 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cmath
 
+import matplotlib as mpl
+
+mpl.rcParams.update({
+    "font.size": 14,
+    "axes.titlesize": 16,
+    "axes.labelsize": 14,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+    "legend.fontsize": 12,
+})
 # ----------------------------
 # Parameters
 # ----------------------------
