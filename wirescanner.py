@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+from scipy.optimize import curve_fit
 import matplotlib as mpl
 
 mpl.rcParams.update({
@@ -12,22 +12,28 @@ mpl.rcParams.update({
     "legend.fontsize": 12,
 })
 
+
+
+def gauss(y, A, sigma):
+    return A * np.exp(-y**2 / (2 * sigma**2))
+
 plt.figure(figsize=(8,5))
-beams=[10]
-grid_width=np.max(beams)*3
+beams=[10,20]
+sigma_L = 1000.0  
+grid_width=sigma_L*3
 for beamsize in beams:
     # ----------------------------
     # Beam parameters (nm)
     # ----------------------------
-    sigma_e = beamsize     # electron beam rms
-    sigma_L = 50.0      # laser rms
+    sigma_e = beamsize     # electron beam rms nm
+        # laser rms, nm
     lambda0=800 #nm laser wavelength
     # ----------------------------
     # Noise parameters
     # ----------------------------
     A0 = 1.0
-    sigma_A0 = 0.05
-    sigma_phi0 = 0.05
+    sigma_A0 = 0.01
+    sigma_phi0 = 0.01
     dB_squeezing=10
     r = 1.15/2 #10dB # squeezing factor
 
@@ -100,10 +106,6 @@ for beamsize in beams:
         mean_vals = np.array(mean_vals)
         std_vals = np.array(std_vals)
 
-        # Normalize to compare profiles
-        #mean_vals /= mean_vals.max()
-        #std_vals /= mean_vals.max()
-
         results[label] = (mean_vals, std_vals)
 
     # ----------------------------
@@ -114,61 +116,60 @@ for beamsize in beams:
         if label=="Simulated beam":
             label=f"simulated beam, rms size {sigma_e} nm"
         plt.plot(y_scan, mean_vals, label=label)
-        plt.fill_between(
+        plt.fill_between( 
             y_scan,
             mean_vals - std_vals,
             mean_vals + std_vals,
             alpha=0.3
         )
+    print("\nReconstructed beam sizes:\n")
+
+    for label, (mean_vals, std_vals) in results.items():
+
+        if label == "Simulated beam":
+            continue
+
+        # Initial guesses
+        A0_guess = mean_vals.max()
+        sigma_guess = np.sqrt(sigma_e**2 + sigma_L**2)
+
+        popt, pcov = curve_fit(
+            gauss,
+            y_scan,
+            mean_vals,
+            p0=[A0_guess, sigma_guess],
+            sigma=std_vals,
+            absolute_sigma=True
+        )
+
+        A_fit, sigma_meas = popt
+        dA_fit, dsigma_meas = np.sqrt(np.diag(pcov))
+
+        # Deconvolve laser size
+        sigma_e_rec = np.sqrt(sigma_meas**2 - sigma_L**2)
+
+        # Error propagation
+        dsigma_e = (sigma_meas / sigma_e_rec) * dsigma_meas
+
+        print(f"{label}:")
+        print(f"  σ_meas = {sigma_meas:.2f} ± {dsigma_meas:.2f} nm")
+        print(f"  σ_e    = {sigma_e_rec:.2f} ± {dsigma_e:.2f} nm\n")
 #plt.plot(x,np.exp(-(x**2) / (2 * sigma_e**2)),label=f'simulated electron beam')#, $\sigma_x$={sigma_e} nm')
 plt.xlabel("laser position $y_0$  (nm)")
 plt.ylabel("compton signal [a.u.]")
-plt.title(f"reconstruction of an electron beam transverse profile from {N_samples} samples\nwith a {lambda0} nm laser & {sigma_A0*100} % noise focused to {sigma_L} nm rms")
+plt.title(f"Compton signal taken from {N_samples} samples\nwith a {lambda0} nm laser & {sigma_A0*100} % noise focused to {sigma_L} nm rms")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.show()
 
 
-def gauss(y, A, sigma):
-    return A * np.exp(-y**2 / (2 * sigma**2))
 
-from scipy.optimize import curve_fit
 
-print("\nReconstructed beam sizes:\n")
 
-for label, (mean_vals, std_vals) in results.items():
 
-    if label == "Simulated beam":
-        continue
 
-    # Initial guesses
-    A0_guess = mean_vals.max()
-    sigma_guess = np.sqrt(sigma_e**2 + sigma_L**2)
-
-    popt, pcov = curve_fit(
-        gauss,
-        y_scan,
-        mean_vals,
-        p0=[A0_guess, sigma_guess],
-        sigma=std_vals,
-        absolute_sigma=True
-    )
-
-    A_fit, sigma_meas = popt
-    dA_fit, dsigma_meas = np.sqrt(np.diag(pcov))
-
-    # Deconvolve laser size
-    sigma_e_rec = np.sqrt(sigma_meas**2 - sigma_L**2)
-
-    # Error propagation
-    dsigma_e = (sigma_meas / sigma_e_rec) * dsigma_meas
-
-    print(f"{label}:")
-    print(f"  σ_meas = {sigma_meas:.2f} ± {dsigma_meas:.2f} nm")
-    print(f"  σ_e    = {sigma_e_rec:.2f} ± {dsigma_e:.2f} nm\n")
-
-y_fine = np.linspace(y_scan.min(), y_scan.max(), 1000)
-plt.plot(y_fine, gauss(y_fine, A_fit, sigma_meas), '--k')
+#y_fine = np.linspace(y_scan.min(), y_scan.max(), 1000)
+#plt.plot(y_fine, gauss(y_fine, A_fit, sigma_meas), '--k')
 
 
