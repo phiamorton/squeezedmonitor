@@ -18,7 +18,7 @@ def gauss(y, A, sigma):
     return A * np.exp(-y**2 / (2 * sigma**2))
 
 plt.figure(figsize=(8,5))
-beams=[10,20]
+beams=[10, 25]
 sigma_L = 1000.0  
 grid_width=sigma_L*3
 for beamsize in beams:
@@ -52,7 +52,7 @@ for beamsize in beams:
     # Scan & sampling
     # ----------------------------
     y_scan = np.linspace(-grid_width, grid_width, 100)
-    N_samples = 10
+    N_samples = 50
 
     # ----------------------------
     # Electron beam
@@ -114,7 +114,10 @@ for beamsize in beams:
 
     for label, (mean_vals, std_vals) in results.items():
         if label=="Simulated beam":
-            label=f"simulated beam, rms size {sigma_e} nm"
+            label=f"Simulated Beam, rms Size {sigma_e} nm"
+
+        if label=="Amplitude-squeezed":
+            label=f"{dB_squeezing} dB Amplitude-Squeezed"
         plt.plot(y_scan, mean_vals, label=label)
         plt.fill_between( 
             y_scan,
@@ -155,9 +158,9 @@ for beamsize in beams:
         print(f"  σ_meas = {sigma_meas:.2f} ± {dsigma_meas:.2f} nm")
         print(f"  σ_e    = {sigma_e_rec:.2f} ± {dsigma_e:.2f} nm\n")
 #plt.plot(x,np.exp(-(x**2) / (2 * sigma_e**2)),label=f'simulated electron beam')#, $\sigma_x$={sigma_e} nm')
-plt.xlabel("laser position $y_0$  (nm)")
-plt.ylabel("compton signal [a.u.]")
-plt.title(f"Compton signal taken from {N_samples} samples\nwith a {lambda0} nm laser & {sigma_A0*100} % noise focused to {sigma_L} nm rms")
+plt.xlabel("Relative Laser Position (nm)")
+plt.ylabel("Compton Signal [a.u.]")
+plt.title(f"Compton Signal Averaged From {N_samples} Samples\nWith a {lambda0} nm Laser & {sigma_A0*100} % Noise Focused to {sigma_L} nm")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
